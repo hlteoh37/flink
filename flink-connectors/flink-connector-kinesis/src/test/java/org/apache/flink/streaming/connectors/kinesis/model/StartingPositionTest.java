@@ -66,6 +66,17 @@ public class StartingPositionTest {
     }
 
     @Test
+    public void testStartingPositionContinueFromSentinelTimestamp() {
+        thrown.expect(IllegalArgumentException.class);
+
+        SequenceNumber sequenceNumber =
+                SentinelSequenceNumber.SENTINEL_AT_TIMESTAMP_SEQUENCE_NUM.get();
+        StartingPosition position = StartingPosition.continueFromSequenceNumber(sequenceNumber);
+        assertThat(position.getShardIteratorType()).isEqualTo(ShardIteratorType.AT_TIMESTAMP);
+        assertThat(position.getStartingMarker()).isNull();
+    }
+
+    @Test
     public void testStartingPositionRestartFromSentinelEarliest() {
         SequenceNumber sequenceNumber = SentinelSequenceNumber.SENTINEL_EARLIEST_SEQUENCE_NUM.get();
         StartingPosition position = StartingPosition.restartFromSequenceNumber(sequenceNumber);
@@ -89,6 +100,17 @@ public class StartingPositionTest {
                 SentinelSequenceNumber.SENTINEL_SHARD_ENDING_SEQUENCE_NUM.get();
         StartingPosition position = StartingPosition.restartFromSequenceNumber(sequenceNumber);
         assertThat(position.getShardIteratorType()).isEqualTo(ShardIteratorType.LATEST);
+        assertThat(position.getStartingMarker()).isNull();
+    }
+
+    @Test
+    public void testStartingPositionRestartFromSentinelTimestamp() {
+        thrown.expect(IllegalArgumentException.class);
+
+        SequenceNumber sequenceNumber =
+                SentinelSequenceNumber.SENTINEL_AT_TIMESTAMP_SEQUENCE_NUM.get();
+        StartingPosition position = StartingPosition.restartFromSequenceNumber(sequenceNumber);
+        assertThat(position.getShardIteratorType()).isEqualTo(ShardIteratorType.AT_TIMESTAMP);
         assertThat(position.getStartingMarker()).isNull();
     }
 }

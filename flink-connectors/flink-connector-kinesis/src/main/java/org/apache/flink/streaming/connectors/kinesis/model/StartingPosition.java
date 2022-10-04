@@ -111,6 +111,9 @@ public class StartingPosition {
         } else if (sequenceNumber.equals(
                 SentinelSequenceNumber.SENTINEL_EARLIEST_SEQUENCE_NUM.get())) {
             return TRIM_HORIZON;
+        } else if (sequenceNumber.equals(
+                SentinelSequenceNumber.SENTINEL_AT_TIMESTAMP_SEQUENCE_NUM.get())) {
+            return AT_TIMESTAMP;
         } else {
             throw new IllegalArgumentException("Unexpected sentinel type: " + sequenceNumber);
         }
