@@ -80,6 +80,7 @@ public class CheckpointsCleaner implements Serializable, AutoCloseableAsync {
         executor.execute(
                 () -> {
                     try {
+                        LOG.info("XXXYYY - disposing of checkpoint {}", checkpoint.getCheckpointID());
                         cleanupAction.run();
                     } catch (Exception e) {
                         LOG.warn(
