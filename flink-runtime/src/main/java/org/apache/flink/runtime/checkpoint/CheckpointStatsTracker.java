@@ -25,6 +25,9 @@ import org.apache.flink.metrics.MetricGroup;
 import org.apache.flink.runtime.executiongraph.ExecutionVertex;
 import org.apache.flink.runtime.jobgraph.JobVertexID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.Nullable;
 
 import java.util.Map;
@@ -50,6 +53,8 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * frontend and the {@link Metric} system.
  */
 public class CheckpointStatsTracker {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CheckpointStatsTracker.class);
 
     /**
      * Lock used to update stats and creating snapshots. Updates always happen from a single Thread
@@ -120,6 +125,8 @@ public class CheckpointStatsTracker {
         // Only create a new snapshot if dirty and no update in progress,
         // because we don't want to block the coordinator.
         if (dirty && statsReadWriteLock.tryLock()) {
+            LOG.info("XXX - createSnapshot acquired lock");
+            LOG.info("XXX - latest checkpoint is " + history.getLatestCompletedCheckpoint().getCheckpointId());
             try {
                 // Create a new snapshot
                 snapshot =
@@ -134,6 +141,7 @@ public class CheckpointStatsTracker {
                 dirty = false;
             } finally {
                 statsReadWriteLock.unlock();
+                LOG.info("XXX - createSnapshot released lock");
             }
         }
 
@@ -163,6 +171,7 @@ public class CheckpointStatsTracker {
                 new PendingCheckpointStats(checkpointId, triggerTimestamp, props, vertexToDop);
 
         statsReadWriteLock.lock();
+        LOG.info("XXX - reportPendingCheckpoint holding lock");
         try {
             counts.incrementInProgressCheckpoints();
             history.addInProgressCheckpoint(pending);
@@ -170,6 +179,7 @@ public class CheckpointStatsTracker {
             dirty = true;
         } finally {
             statsReadWriteLock.unlock();
+            LOG.info("XXX - reportPendingCheckpoint released lock");
         }
 
         return pending;
@@ -184,6 +194,7 @@ public class CheckpointStatsTracker {
         checkNotNull(restored, "Restored checkpoint");
 
         statsReadWriteLock.lock();
+        LOG.info("XXX - reportRestoredCheckpoint holding lock");
         try {
             counts.incrementRestoredCheckpoints();
             latestRestoredCheckpoint = restored;
@@ -191,6 +202,7 @@ public class CheckpointStatsTracker {
             dirty = true;
         } finally {
             statsReadWriteLock.unlock();
+            LOG.info("XXX - reportRestoredCheckpoint released lock");
         }
     }
 
@@ -201,6 +213,7 @@ public class CheckpointStatsTracker {
      */
     void reportCompletedCheckpoint(CompletedCheckpointStats completed) {
         statsReadWriteLock.lock();
+        LOG.info("XXX - reportCompletedCheckpoint holding lock");
         try {
             latestCompletedCheckpoint = completed;
 
@@ -212,6 +225,7 @@ public class CheckpointStatsTracker {
             dirty = true;
         } finally {
             statsReadWriteLock.unlock();
+            LOG.info("XXX - reportCompletedCheckpoint released lock");
         }
     }
 
@@ -222,6 +236,7 @@ public class CheckpointStatsTracker {
      */
     void reportFailedCheckpoint(FailedCheckpointStats failed) {
         statsReadWriteLock.lock();
+        LOG.info("XXX - reportFailedCheckpoint holding lock");
         try {
             counts.incrementFailedCheckpoints();
             history.replacePendingCheckpointById(failed);
@@ -229,6 +244,7 @@ public class CheckpointStatsTracker {
             dirty = true;
         } finally {
             statsReadWriteLock.unlock();
+            LOG.info("XXX - reportFailedCheckpoint released lock");
         }
     }
 
@@ -238,28 +254,33 @@ public class CheckpointStatsTracker {
      */
     public void reportFailedCheckpointsWithoutInProgress() {
         statsReadWriteLock.lock();
+        LOG.info("XXX - reportFailedCheckpointsWithoutInProgress holding lock");
         try {
             counts.incrementFailedCheckpointsWithoutInProgress();
 
             dirty = true;
         } finally {
             statsReadWriteLock.unlock();
+            LOG.info("XXX - reportFailedCheckpointsWithoutInProgress released lock");
         }
     }
 
     public PendingCheckpointStats getPendingCheckpointStats(long checkpointId) {
         statsReadWriteLock.lock();
+        LOG.info("XXX - getPendingCheckpointStats holding lock");
         try {
             AbstractCheckpointStats stats = history.getCheckpointById(checkpointId);
             return stats instanceof PendingCheckpointStats ? (PendingCheckpointStats) stats : null;
         } finally {
             statsReadWriteLock.unlock();
+            LOG.info("XXX - getPendingCheckpointStats released lock");
         }
     }
 
     public void reportIncompleteStats(
             long checkpointId, ExecutionVertex vertex, CheckpointMetrics metrics) {
         statsReadWriteLock.lock();
+        LOG.info("XXX - reportIncompleteStats holding lock");
         try {
             AbstractCheckpointStats stats = history.getCheckpointById(checkpointId);
             if (stats instanceof PendingCheckpointStats) {
@@ -283,6 +304,7 @@ public class CheckpointStatsTracker {
             }
         } finally {
             statsReadWriteLock.unlock();
+            LOG.info("XXX - reportIncompleteStats released lock");
         }
     }
 
